@@ -1,0 +1,20 @@
+[1/10] Performing build step for 'bootloader'
+[1/1] cd /home/dungnt98/esp32-conveyor/build/bootloader/esp-idf/esptool_py && /home/dungnt98/.espressif/python_env/idf5.0_py3.8_env/bin/python /home/dungnt98/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x1000 /home/dungnt98/esp32-conveyor/build/bootloader/bootloader.bin
+Bootloader binary size 0x6700 bytes. 0x900 bytes (8%) free.
+[2/8] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/main.c.obj
+In file included from ../main/main.c:7:
+/home/dungnt98/esp/esp-idf/components/heap/include/esp_heap_trace.h:25:2: warning: #warning "esp_heap_trace.h is included but heap tracing is disabled in menuconfig, functions are no-ops" [-Wcpp]
+   25 | #warning "esp_heap_trace.h is included but heap tracing is disabled in menuconfig, functions are no-ops"
+      |  ^~~~~~~
+[3/8] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/wifi_station.c.obj
+[4/8] Linking C static library esp-idf/main/libmain.a
+[5/8] Generating ld/sections.ld
+[6/8] Linking CXX executable esp32-conveyor.elf
+[7/8] Generating binary image from built executable
+esptool.py v4.5
+Creating esp32 image...
+Merged 25 ELF sections
+Successfully created esp32 image.
+Generated /home/dungnt98/esp32-conveyor/build/esp32-conveyor.bin
+[8/8] cd /home/dungnt98/esp32-conveyor/build/esp-idf/esptool_py && /home/dungnt98/.espressif/python_env/idf5.0_py3.8_env/bin/python /home/dungnt98/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /home/dungnt98/esp32-conveyor/build/partition_table/partition-table.bin /home/dungnt98/esp32-conveyor/build/esp32-conveyor.bin
+esp32-conveyor.bin binary size 0xaedc0 bytes. Smallest app partition is 0x100000 bytes. 0x51240 bytes (32%) free.
