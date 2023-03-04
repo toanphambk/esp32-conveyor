@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include "esp_system.h"
 #include "driver/i2c.h"
-#include "freertos/queue.h"
 #include "global_header.h"
 
 #define IN_PORT_NUM 2
@@ -28,6 +28,14 @@ typedef struct
     uint8_t output[OUT_PORT_NUM];
 } port_address_t;
 
+/**
+ *                    0     1     2     3     4     5     6     7   (gate no)
+ * right gate[0] |----*-----*-----*-----*-----*-----*-----*-----*|  
+ *                           /
+ *                    \ 
+ * left gate[1]  |----*-----*-----*-----*-----*-----*-----*-----*|  
+ *                    0     1     2     3     4     5     6     7   (gate no)
+*/
 typedef struct
 {
     uint8_t input[IN_PORT_NUM][8];
@@ -49,9 +57,11 @@ typedef struct
     void (*print_port_data)(io_data_t buff);
     void (*command_enqueue)(output_command_t *command);
     void (*io_test)(void);
+    uint8_t (*io_read_pin_value)(uint8_t port, uint8_t pin);
     driver_state_t (*io_driver_get_state)(void);
 } io_driver_t;
 
 /* Function to get an instance of the gate driver */
 io_driver_t *get_io_driver_instance(void);
+void io_scan_task_start(void);
 #endif

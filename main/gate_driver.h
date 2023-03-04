@@ -11,14 +11,14 @@
 /* Enumeration for gate position */
 typedef enum
 {
-    RIGHT_GATE,
+    RIGHT_GATE = 0,
     LEFT_GATE
 } gate_position_t;
 
 /* Enumeration for gate command name */
 typedef enum
 {
-    GATE_STOP_COMMAND,
+    GATE_STOP_COMMAND = 0,
     GATE_TRIGGER_COMMAND,
     GATE_CLOSE_COMMAND,
     GATE_OPEN_COMMAND,
@@ -27,7 +27,7 @@ typedef enum
 /* Enumeration for gate state */
 typedef enum
 {
-    GATE_READY,
+    GATE_READY = 0,
     GATE_CLOSED,
     GATE_MOVING,
     GATE_OPEN,
@@ -92,4 +92,5 @@ typedef struct
 
 /* Function to get an instance of the gate driver */
 gate_driver_t *get_gate_driver_instance(void);
+void gate_driver_start_task(void);
 #endif

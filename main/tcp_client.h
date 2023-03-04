@@ -8,5 +8,5 @@ typedef struct {
     uint32_t len;
 } tcp_msg_t;
 
-void tcp_client_start(void);
+void tcp_client_start_task(void);
 void tcp_send_data(char* data, uint32_t len);

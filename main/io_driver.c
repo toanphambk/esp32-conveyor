@@ -191,6 +191,11 @@ void io_test()
     }
 }
 
+uint8_t io_read_pin_value(uint8_t port, uint8_t pin)
+{
+    return io_data.input[port][pin];
+}
+
 void command_enqueue(output_command_t *command)
 {
     if (xQueueSend(command_queue, command, 0) != pdTRUE)
@@ -228,7 +233,7 @@ void io_scan_task(void *pvParameter)
     }
 }
 
-io_driver_t *get_io_driver_instance()
+void io_scan_task_start(void)
 {
     if (state == BOOT_UP)
     {
@@ -239,7 +244,13 @@ io_driver_t *get_io_driver_instance()
         io_driver_instance.command_enqueue = command_enqueue;
         io_driver_instance.io_scan_task = io_scan_task;
         io_driver_instance.io_test = io_test;
+        io_driver_instance.io_read_pin_value = io_read_pin_value;
     }
 
+    xTaskCreate(io_scan_task, "io_scan_task", 4096, NULL, 5, NULL);
+}
+
+io_driver_t *get_io_driver_instance()
+{
     return &io_driver_instance;
 }
