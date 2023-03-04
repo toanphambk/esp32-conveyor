@@ -19,7 +19,6 @@
 #define HOST_IP_ADDR "192.168.1.4"
 #define PORT 3333
 
-
 QueueHandle_t tcp_tx_queue;
 QueueHandle_t tcp_rx_queue;
 
@@ -32,7 +31,7 @@ void tcp_queue_init()
     }
 
     tcp_rx_queue = xQueueCreate(10, sizeof(tcp_msg_t));
-    if (tcp_tx_queue == NULL)
+    if (tcp_rx_queue == NULL)
     {
         printf("Failed to create queue.\n");
     }

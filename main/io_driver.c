@@ -215,9 +215,12 @@ void queue_init()
 
 void io_scan_task(void *pvParameter)
 {
+    printf("io_scan_task\r\n");
+
     init_i2c();
     reset_port();
     queue_init();
+
     while (1)
     {
         output_command_t command;

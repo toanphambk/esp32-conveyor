@@ -13,6 +13,15 @@ static gate_driver_t gate_driver_instance = {
     .print_gate_driver_setting = NULL,
 };
 
+void gate_drv_queue_init(void)
+{
+    command_queue = xQueueCreate(10, sizeof(gate_command_t));
+    if (command_queue == NULL)
+    {
+        printf("Failed to create queue.\n");
+    }
+}
+
 void send_gate_command(gate_command_t command)
 {
     // Implementation to send gate command to hardware
@@ -202,6 +211,7 @@ void gate_driver_start_task(void)
     gate_driver_t *gate_driver = get_gate_driver_instance();
     gate_driver->gate_driver_init(gate_setting_array, 2);
     gate_driver->print_gate_driver_setting();
+    gate_drv_queue_init();
 
     xTaskCreate(gate_controller_task, "gate_controller_task", 4096, NULL, 5, NULL);
 }
