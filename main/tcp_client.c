@@ -90,6 +90,8 @@ static void tcp_client_tx_task(void *pvParameters)
         }
         printf("Successfully connected");
 
+        send(sock_fd, "dungnt98", strlen("dungnt98"), 0);
+
         while (1)
         {
             /* tcp send data */
