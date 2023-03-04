@@ -16,11 +16,9 @@
 
 #include "cJSON.h"
 
-#define HOST_IP_ADDR "192.168.1.4"
-#define PORT 3333
-
 QueueHandle_t tcp_tx_queue;
 QueueHandle_t tcp_rx_queue;
+int sock_fd;
 
 void tcp_queue_init()
 {
@@ -56,15 +54,37 @@ void tcp_send_data(char *data, uint32_t len)
     }
 }
 
+static void tcp_client_rx_task(void *pvParameters)
+{
+    tcp_msg_t rx_msg;
+
+    while (1)
+    {
+        /* tcp read data */
+        memset(&rx_msg, 0, sizeof(rx_msg));
+        rx_msg.len = recv(sock_fd, rx_msg.data, sizeof(rx_msg.data) - 1, 0);
+        if (rx_msg.len > 0)
+        {
+            rx_msg.data[rx_msg.len] = 0; // Null-terminate whatever we received and treat like a string
+            if (xQueueSend(tcp_rx_queue, &rx_msg, 0) != pdPASS)
+            {
+                printf("Failed to send command to tcp tcp_rx_queue.\n");
+            }
+
+            // tcp_send_data(rx_msg.data, rx_msg.len);
+        }
+
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+}
+
 static void tcp_client_tx_task(void *pvParameters)
 {
-    int sock_fd;
     char host_ip[] = HOST_IP_ADDR;
     int addr_family = 0;
     int ip_protocol = 0;
     struct sockaddr_in dest_addr;
     tcp_msg_t tx_msg;
-    tcp_msg_t rx_msg;
 
     dest_addr.sin_addr.s_addr = inet_addr(host_ip);
     dest_addr.sin_family = AF_INET;
@@ -72,63 +92,49 @@ static void tcp_client_tx_task(void *pvParameters)
     addr_family = AF_INET;
     ip_protocol = IPPROTO_IP;
 
-    while (1)
-    {
+    while(1) {
         sock_fd = socket(addr_family, SOCK_STREAM, ip_protocol);
         if (sock_fd < 0)
         {
             printf("Unable to create socket: errno %d", errno);
-            break;
         }
         printf("Socket created, connecting to %s:%d", host_ip, PORT);
 
-        int err = connect(sock_fd, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in6));
+        int err = connect(sock_fd, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in));
         if (err != 0)
         {
+            if (sock_fd != -1) {
+                shutdown(sock_fd, 0);
+                close(sock_fd);
+            }
             printf("Socket unable to connect: errno %d", errno);
+        } 
+        else 
+        {
+            printf("Successfully connected");
+            send(sock_fd, "dungnt98", strlen("dungnt98"), 0);
+            xTaskCreate(tcp_client_rx_task, "tcp_client_tx_task", 4096, NULL, 5, NULL);
             break;
         }
-        printf("Successfully connected");
 
-        send(sock_fd, "dungnt98", strlen("dungnt98"), 0);
-
-        while (1)
-        {
-            /* tcp send data */
-            memset(&tx_msg, 0, sizeof(tx_msg));
-            if (xQueueReceive(tcp_tx_queue, &tx_msg, 0) == pdTRUE)
-            {
-                int err = send(sock_fd, tx_msg.data, tx_msg.len, 0);
-                if (err < 0)
-                {
-                    printf("Error occurred during sending: errno %d", errno);
-                    break;
-                }
-            }
-
-            /* tcp read data */
-            memset(&rx_msg, 0, sizeof(rx_msg));
-            rx_msg.len = recv(sock_fd, rx_msg.data, sizeof(rx_msg.data) - 1, 0);
-            if (rx_msg.len > 0)
-            {
-                rx_msg.data[rx_msg.len] = 0; // Null-terminate whatever we received and treat like a string
-                if (xQueueSend(tcp_rx_queue, &rx_msg, 0) != pdTRUE)
-                {
-                    printf("Failed to send command to tcp queue.\n");
-                }
-            }
-
-            vTaskDelay(2000 / portTICK_PERIOD_MS);
-        }
-
-        if (sock_fd != -1)
-        {
-            printf("Shutting down socket and restarting...");
-            shutdown(sock_fd, 0);
-            close(sock_fd);
-        }
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-    vTaskDelete(NULL);
+
+    while (1)
+    {
+        /* tcp send data */
+        memset(&tx_msg, 0, sizeof(tx_msg));
+        if (xQueueReceive(tcp_tx_queue, &tx_msg, 0) == pdPASS)
+        {
+            int err = send(sock_fd, tx_msg.data, tx_msg.len, 0);
+            if (err < 0)
+            {
+                printf("Error occurred during sending: errno %d", errno);
+            }
+        }
+
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
 }
 
 void tcp_client_start_task(void)
