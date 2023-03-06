@@ -1,7 +1,8 @@
 #include "encoder.h"
-static const char *TAG = "example";
+static const char *TAG = "TCP";
 int pulse_count = 0;
 int event_count = 0;
+pcnt_unit_handle_t pcnt_unit = NULL;
 
 static bool example_pcnt_on_reach(pcnt_unit_handle_t unit, const pcnt_watch_event_data_t *edata, void *user_ctx)
 {
@@ -12,21 +13,20 @@ static bool example_pcnt_on_reach(pcnt_unit_handle_t unit, const pcnt_watch_even
     return (high_task_wakeup == pdTRUE);
 }
 
-static void encoder_read_task(void *pvParameters)
+static void encoder_read_task()
 {
-    ESP_LOGI(TAG, "install pcnt unit");
-    pcnt_unit_config_t unit_config = {
+    ESP_LOGI(TAG, "install pcnt unit");    pcnt_unit_config_t unit_config = {
         .high_limit = EXAMPLE_PCNT_HIGH_LIMIT,
         .low_limit = EXAMPLE_PCNT_LOW_LIMIT,
     };
-    pcnt_unit_handle_t pcnt_unit = NULL;
+
     ESP_ERROR_CHECK(pcnt_new_unit(&unit_config, &pcnt_unit));
 
     ESP_LOGI(TAG, "set glitch filter");
     pcnt_glitch_filter_config_t filter_config = {
-        .max_glitch_ns = 5000,
+        .max_glitch_ns = 1000,
     };
-    ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcnt_unit, &filter_config));
+    // ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcnt_unit, NULL));
 
     ESP_LOGI(TAG, "install pcnt channels");
     pcnt_chan_config_t chan_a_config = {
@@ -35,25 +35,17 @@ static void encoder_read_task(void *pvParameters)
     };
     pcnt_channel_handle_t pcnt_chan_a = NULL;
     ESP_ERROR_CHECK(pcnt_new_channel(pcnt_unit, &chan_a_config, &pcnt_chan_a));
-    pcnt_chan_config_t chan_b_config = {
-        .edge_gpio_num = EXAMPLE_EC11_GPIO_B,
-        .level_gpio_num = EXAMPLE_EC11_GPIO_A,
-    };
-    pcnt_channel_handle_t pcnt_chan_b = NULL;
-    ESP_ERROR_CHECK(pcnt_new_channel(pcnt_unit, &chan_b_config, &pcnt_chan_b));
 
     ESP_LOGI(TAG, "set edge and level actions for pcnt channels");
     ESP_ERROR_CHECK(pcnt_channel_set_edge_action(pcnt_chan_a, PCNT_CHANNEL_EDGE_ACTION_DECREASE, PCNT_CHANNEL_EDGE_ACTION_INCREASE));
     ESP_ERROR_CHECK(pcnt_channel_set_level_action(pcnt_chan_a, PCNT_CHANNEL_LEVEL_ACTION_KEEP, PCNT_CHANNEL_LEVEL_ACTION_INVERSE));
-    ESP_ERROR_CHECK(pcnt_channel_set_edge_action(pcnt_chan_b, PCNT_CHANNEL_EDGE_ACTION_INCREASE, PCNT_CHANNEL_EDGE_ACTION_DECREASE));
-    ESP_ERROR_CHECK(pcnt_channel_set_level_action(pcnt_chan_b, PCNT_CHANNEL_LEVEL_ACTION_KEEP, PCNT_CHANNEL_LEVEL_ACTION_INVERSE));
 
-    // ESP_LOGI(TAG, "add watch points and register callbacks");
-    // int watch_points[] = {EXAMPLE_PCNT_LOW_LIMIT, 0, EXAMPLE_PCNT_HIGH_LIMIT};
-    // for (size_t i = 0; i < sizeof(watch_points) / sizeof(watch_points[0]); i++)
-    // {
-    //     ESP_ERROR_CHECK(pcnt_unit_add_watch_point(pcnt_unit, watch_points[i]));
-    // }
+    ESP_LOGI(TAG, "add watch points and register callbacks");
+    int watch_points[] = {EXAMPLE_PCNT_LOW_LIMIT, 0, EXAMPLE_PCNT_HIGH_LIMIT};
+    for (size_t i = 0; i < sizeof(watch_points) / sizeof(watch_points[0]); i++)
+    {
+        ESP_ERROR_CHECK(pcnt_unit_add_watch_point(pcnt_unit, watch_points[i]));
+    }
     pcnt_event_callbacks_t cbs = {
         .on_reach = example_pcnt_on_reach,
     };
@@ -67,21 +59,22 @@ static void encoder_read_task(void *pvParameters)
     ESP_LOGI(TAG, "start pcnt unit");
     ESP_ERROR_CHECK(pcnt_unit_start(pcnt_unit));
 
-    // Report counter value
-
-    while (1)
-    {
-        ESP_ERROR_CHECK(pcnt_unit_get_count(pcnt_unit, &pulse_count));
-        vTaskDelay(100/portTICK_PERIOD_MS);
-    }
+#if CONFIG_EXAMPLE_WAKE_UP_LIGHT_SLEEP
+    // EC11 channel output high level in normal state, so we set "low level" to wake up the chip
+    ESP_ERROR_CHECK(gpio_wakeup_enable(EXAMPLE_EC11_GPIO_A, GPIO_INTR_LOW_LEVEL));
+    ESP_ERROR_CHECK(esp_sleep_enable_gpio_wakeup());
+    ESP_ERROR_CHECK(esp_light_sleep_start());
+#endif
 }
 
 int get_pulse()
 {
+    ESP_ERROR_CHECK(pcnt_unit_get_count(pcnt_unit, &pulse_count));
+    ESP_LOGI(TAG, "Pulse count: %d", pulse_count);
     return pulse_count;
 }
 
 void encoder_start(void)
 {
-    xTaskCreate(encoder_read_task, "tcp_client", 4096, NULL, 5, NULL);
+    encoder_read_task();
 }
