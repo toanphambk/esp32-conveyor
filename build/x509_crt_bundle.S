@@ -1,4 +1,4 @@
-/* * Data converted from /home/dungnt98/esp32-conveyor/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from C:/Users/Admin/esp32-conveyor/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 .section .rodata.embedded

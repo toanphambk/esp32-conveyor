@@ -1,21 +1,17 @@
 #pragma once
-
 #include <stdint.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "esp_log.h"
+#include "driver/pulse_cnt.h"
+#include "tcp_client.h"
+#include "string.h"
 
-#define ENCODER_A_PORT  0
-#define ENCODER_A_PIN   1
-#define ENCODER_B_PORT  0
-#define ENCODER_B_PIN   2
+#define EXAMPLE_PCNT_HIGH_LIMIT 4000
+#define EXAMPLE_PCNT_LOW_LIMIT  -2000
+#define EXAMPLE_EC11_GPIO_A 34
+#define EXAMPLE_EC11_GPIO_B 35
 
-#define ENCODER_NUM_PULSE   360
-
-typedef enum {
-    CLOCKWISE_DIR = 0,
-    COUNTER_CLOCKWISE,
-} encoder_dir_t;
-
-typedef struct {
-    encoder_dir_t direction;
-    uint32_t pulse_count;
-    uint32_t position; /* 360 degrees */
-} encoder_t;
+void encoder_start(void);
+int get_pulse();
