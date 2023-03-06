@@ -10,8 +10,8 @@
 
 #define EXAMPLE_PCNT_HIGH_LIMIT 4000
 #define EXAMPLE_PCNT_LOW_LIMIT  -2000
-#define EXAMPLE_EC11_GPIO_A 34
-#define EXAMPLE_EC11_GPIO_B 35
+#define EXAMPLE_EC11_GPIO_A 15
+#define EXAMPLE_EC11_GPIO_B 16
 
 void encoder_start(void);
 int get_pulse();

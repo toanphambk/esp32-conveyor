@@ -21,31 +21,7 @@ QueueHandle_t tcp_rx_queue;
 int sock_fd;
 
 
-static void tcp_client_rx_task(void *pvParameters)
-{
-    tcp_msg_t rx_msg;
-
-    while (1)
-    {
-        /* tcp read data */
-        memset(&rx_msg, 0, sizeof(rx_msg));
-        rx_msg.len = recv(sock_fd, rx_msg.data, sizeof(rx_msg.data) - 1, 0);
-        if (rx_msg.len > 0)
-        {
-            rx_msg.data[rx_msg.len] = 0; // Null-terminate whatever we received and treat like a string
-            if (xQueueSend(tcp_rx_queue, &rx_msg, 0) != pdPASS)
-            {
-                printf("Failed to send command to tcp tcp_rx_queue.\n");
-            }
-
-            // tcp_send_data(rx_msg.data, rx_msg.len);
-        }
-
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-    }
-}
-
-void send_data(int data)
+void send_tcp_data(int data)
 {
     char str[10] = "";
     sprintf(str, "%d\n", data);
@@ -58,7 +34,6 @@ static void tcp_client_tx_task(void *pvParameters)
     int addr_family = 0;
     int ip_protocol = 0;
     struct sockaddr_in dest_addr;
-    tcp_msg_t tx_msg;
 
     dest_addr.sin_addr.s_addr = inet_addr(host_ip);
     dest_addr.sin_family = AF_INET;

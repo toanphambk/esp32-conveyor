@@ -24,6 +24,6 @@ void app_main()
     while (1)
     {
         int data = get_pulse();
-        send_data(data);
+        send_tcp_data(data);
     }
 }
